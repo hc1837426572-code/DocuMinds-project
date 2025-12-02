@@ -1,105 +1,89 @@
+# 🐺 Werewolf Multi-Agent System Architecture Flow Diagram
+
+## Overall Architecture Diagram
+
+```mermaid
 graph TB
-    Start([Document Upload]) --> Router[Router Agent<br/>Complexity Assessment]
-    Router --> SimplePath[Simple Processing Path]
-    Router --> ComplexPath[Complex Processing Path]
+    Start([Game Start]) --> Init[Initialize Game]
+    Init --> LoadMemory[Load Long-term Memory]
+    LoadMemory --> AssignRoles[Assign Roles]
+    AssignRoles --> GameLoop{Game Main Loop}
 
-    SimplePath --> Extractor[Extractor Agent<br/>Data Extraction]
-    Extractor --> Summarizer[Summarizer Agent<br/>Content Summary]
-    Summarizer --> Output[Generate Output]
+    GameLoop --> NightPhase[Night Phase]
+    GameLoop --> DayPhase[Day Phase]
+    GameLoop --> CheckWin{Check Victory Conditions}
 
-    ComplexPath --> Orchestrator[Orchestrator Agent<br/>Workflow Planning]
-    Orchestrator --> Extractor2[Extractor Agent<br/>Deep Analysis]
-    Extractor2 --> Analyzer[Analyzer Agent<br/>Content Analysis]
-    Analyzer --> Validator[Validator Agent<br/>Quality Check]
-    Validator --> Summarizer2[Summarizer Agent<br/>Insight Generation]
-    Summarizer2 --> Output2[Generate Output]
+    CheckWin -->|Werewolf Win| WolfWin[Werewolf Team Wins]
+    CheckWin -->|Good Win| GoodWin[Good Team Wins]
+    CheckWin -->|Continue| GameLoop
 
-    Output --> Memory[Save to Federated Memory]
-    Output2 --> Memory2[Save to Federated Memory]
-
-    Memory --> End([Complete])
-    Memory2 --> End2([Complete])
+    WolfWin --> Analysis[Game Analysis]
+    GoodWin --> Analysis
+    Analysis --> SaveMemory[Save Experience to Memory]
+    SaveMemory --> End([Game End])
 
     style Start fill:#90EE90
     style End fill:#FFB6C1
-    style End2 fill:#FFB6C1
-    style Router fill:#FFE66D
-    style Orchestrator fill:#4ECDC4
+    style WolfWin fill:#FF6B6B
+    style GoodWin fill:#4ECDC4
+    style GameLoop fill:#FFE66D
+```
 
-   graph LR
-    subgraph "External API Layer"
-        API[OpenAI GPT-4 API]
+## Multi-Agent Interaction Architecture
+
+```mermaid
+graph LR
+    subgraph "DeepSeek API"
+        API[DeepSeek Chat API]
     end
 
-    subgraph "Control Layer"
-        Router[Router Agent<br/>Document Classification]
-        Orchestrator[Orchestrator Agent<br/>Workflow Management]
-        Memory[Federated Memory<br/>Knowledge Base]
+    subgraph "Game Control Layer"
+        GameMaster[Game Master<br/>WerewolfGame]
+        GameState[Game State Management<br/>GameState]
+        Memory[Long-term Memory<br/>MemoryManager]
     end
 
-    subgraph "Processing Agent Layer"
-        Extractor[Extractor Agent<br/>Data Extraction]
-        Analyzer[Analyzer Agent<br/>Content Analysis]
-        Summarizer[Summarizer Agent<br/>Insight Generation]
-        Validator[Validator Agent<br/>Quality Assurance]
+    subgraph "AI Agent Layer"
+        Wolf1[Werewolf Agent #1]
+        Wolf2[Werewolf Agent #2]
+        Villager1[Villager Agent #1]
+        Villager2[Villager Agent #2]
+        Villager3[Villager Agent #3]
+        Seer[Seer Agent]
+        Witch[Witch Agent]
+        Hunter[Hunter Agent]
     end
 
-    subgraph "Storage Layer"
-        Redis[Redis Cache]
-        Postgres[PostgreSQL Database]
-    end
+    GameMaster --> GameState
+    GameMaster --> Memory
 
-    Router --> Orchestrator
-    Router --> Memory
-    Orchestrator --> Extractor
-    Orchestrator --> Analyzer
-    Orchestrator --> Summarizer
-    Orchestrator --> Validator
+    GameMaster -.Query.-> Wolf1
+    GameMaster -.Query.-> Wolf2
+    GameMaster -.Query.-> Villager1
+    GameMaster -.Query.-> Villager2
+    GameMaster -.Query.-> Villager3
+    GameMaster -.Query.-> Seer
+    GameMaster -.Query.-> Witch
+    GameMaster -.Query.-> Hunter
 
-    Extractor --> API
-    Analyzer --> API
-    Summarizer --> API
-    Validator --> API
+    Wolf1 --> API
+    Wolf2 --> API
+    Villager1 --> API
+    Villager2 --> API
+    Villager3 --> API
+    Seer --> API
+    Witch --> API
+    Hunter --> API
 
-    API -.Return Analysis.-> Extractor
-    API -.Return Analysis.-> Analyzer
-    API -.Return Analysis.-> Summarizer
-    API -.Return Analysis.-> Validator
+    API -.Return Decision.-> Wolf1
+    API -.Return Decision.-> Wolf2
+    API -.Return Decision.-> Villager1
+    API -.Return Decision.-> Villager2
+    API -.Return Decision.-> Villager3
+    API -.Return Decision.-> Seer
+    API -.Return Decision.-> Witch
+    API -.Return Decision.-> Hunter
 
-    Memory --> Redis
-    Memory --> Postgres
-
-    style Router fill:#FFE66D
+    style GameMaster fill:#FFE66D
     style API fill:#FF6B6B
-    style Orchestrator fill:#4ECDC4
-
-    sequenceDiagram
-    participant User as User
-    participant API as FastAPI Server
-    participant Router as Router Agent
-    participant Extractor as Extractor Agent
-    participant Summarizer as Summarizer Agent
-    participant Memory as Federated Memory
-    participant GPT as OpenAI API
-
-    User->>API: Upload Document
-    API->>Router: Send Document Data
-    
-    rect rgb(240, 240, 240)
-        Note over Router: Complexity Assessment
-        Router->>Router: Analyze document type
-        Router->>Router: Calculate complexity score
-        Router->>Router: Choose processing path
-    end
-
-    Router->>Extractor: Route to Simple Path
-    Extractor->>GPT: Request data extraction
-    GPT-->>Extractor: Return extracted data
-    Extractor->>Summarizer: Send extracted data
-
-    Summarizer->>GPT: Request summary generation
-    GPT-->>Summarizer: Return generated summary
-    Summarizer->>Memory: Store processing results
-    Memory-->>API: Confirm storage
-
-    API-->>User: Return final output
+```
